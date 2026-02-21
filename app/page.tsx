@@ -8,8 +8,8 @@ import { TalismanFrame } from "@/components/TalismanFrame";
 import { RitualButton } from "@/components/RitualButton";
 import { QiFlowLine } from "@/components/QiFlowLine";
 
-type ApiSuccess = { result: string; requestId?: string };
-type ApiError = { error: string; details?: string; requestId?: string };
+type ApiSuccess = { result: string; requestId?: string; cached?: boolean };
+type ApiError = { error: string; details?: string; requestId?: string; retryAfterSeconds?: number };
 
 export default function HomePage() {
   const [name, setName] = useState("");
@@ -69,7 +69,11 @@ export default function HomePage() {
       if (!res.ok) {
         const msg = "error" in data ? data.error : "요청에 실패했습니다.";
         const rid = "requestId" in data && data.requestId ? ` (requestId: ${data.requestId})` : "";
-        setError(`${msg}${rid}`);
+        const retry =
+          "retryAfterSeconds" in data && typeof data.retryAfterSeconds === "number"
+            ? ` ${data.retryAfterSeconds}초 후 다시 시도해보세요.`
+            : "";
+        setError(`${msg}${retry}${rid}`);
         return;
       }
 

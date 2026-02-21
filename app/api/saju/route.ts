@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
+type CachedValue = { text: string; expiresAt: number };
+const sajuCache = new Map<string, CachedValue>();
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
 type SajuRequestBody = {
   name?: string;
   birthDate?: string; // YYYY-MM-DD
@@ -57,6 +61,46 @@ function isValidTimeHHMM(v: string) {
   return hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59;
 }
 
+function getCacheKey(name: string, birthDate: string, birthTime: string) {
+  return `${name.toLowerCase()}|${birthDate}|${birthTime}`;
+}
+
+function getCached(key: string) {
+  const v = sajuCache.get(key);
+  if (!v) return null;
+  if (Date.now() > v.expiresAt) {
+    sajuCache.delete(key);
+    return null;
+  }
+  return v.text;
+}
+
+function setCached(key: string, text: string) {
+  sajuCache.set(key, { text, expiresAt: Date.now() + CACHE_TTL_MS });
+  // very small & simple eviction
+  if (sajuCache.size > 200) {
+    const firstKey = sajuCache.keys().next().value as string | undefined;
+    if (firstKey) sajuCache.delete(firstKey);
+  }
+}
+
+function extractStatusCode(err: unknown): number | undefined {
+  if (!err || typeof err !== "object") return undefined;
+  const anyErr = err as any;
+  const candidates = [anyErr.status, anyErr.statusCode, anyErr.code, anyErr.response?.status];
+  for (const c of candidates) {
+    if (typeof c === "number") return c;
+    if (typeof c === "string" && /^\d+$/.test(c)) return Number(c);
+  }
+  return undefined;
+}
+
+function isRateLimitError(err: unknown, message?: string) {
+  const m = (message ?? (err instanceof Error ? err.message : String(err))).toLowerCase();
+  const status = extractStatusCode(err);
+  return status === 429 || m.includes("429") || m.includes("resource exhausted") || m.includes("rate") || m.includes("quota");
+}
+
 function toUserFriendlyGeminiError(message: string) {
   const m = message.toLowerCase();
   if (m.includes("429") || m.includes("resource exhausted") || m.includes("rate") || m.includes("quota")) {
@@ -92,6 +136,7 @@ export async function POST(req: Request) {
     const name = (body.name ?? "").trim();
     const birthDate = normalizeBirthDate(body.birthDate ?? "");
     const birthTime = normalizeBirthTime(body.birthTime ?? "");
+    const cacheKey = getCacheKey(name, birthDate, birthTime);
 
     if (!name) return NextResponse.json({ error: "이름을 입력해주세요.", requestId }, { status: 400 });
     if (!isValidDateYYYYMMDD(birthDate)) {
@@ -105,6 +150,11 @@ export async function POST(req: Request) {
         { error: "태어난 시간은 HH:MM(24시간) 형식으로 입력해주세요.", requestId, received: birthTime },
         { status: 400 }
       );
+    }
+
+    const cached = getCached(cacheKey);
+    if (cached) {
+      return NextResponse.json({ result: cached, requestId, cached: true });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -148,6 +198,8 @@ export async function POST(req: Request) {
         break;
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
+        // 429는 재시도/다른 모델 시도가 오히려 호출량만 늘릴 수 있어 즉시 중단
+        if (isRateLimitError(e, msg)) throw e;
         errors.push({ model: modelName, message: msg, phase: "systemInstruction" });
         console.error("[/api/saju] generateContent failed (systemInstruction)", { requestId, modelName, msg });
       }
@@ -161,6 +213,7 @@ export async function POST(req: Request) {
           break;
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
+          if (isRateLimitError(e, msg)) throw e;
           errors.push({ model: modelName, message: msg, phase: "inlinePrompt" });
           console.error("[/api/saju] generateContent failed (inlinePrompt)", { requestId, modelName, msg });
         }
@@ -177,14 +230,24 @@ export async function POST(req: Request) {
       );
     }
 
+    setCached(cacheKey, text);
     return NextResponse.json({ result: text, requestId });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("[/api/saju] error", { requestId, message, err });
-    return NextResponse.json(
-      { error: toUserFriendlyGeminiError(message), details: message, requestId },
-      { status: 500 }
-    );
+    if (isRateLimitError(err, message)) {
+      const retryAfterSeconds = 20;
+      return NextResponse.json(
+        {
+          error: "Gemini API 호출 한도(Quota/Rate limit)에 걸렸습니다. 잠시 후 다시 시도하거나 플랜/쿼터를 확인해주세요.",
+          details: message,
+          requestId,
+          retryAfterSeconds
+        },
+        { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
+      );
+    }
+    return NextResponse.json({ error: toUserFriendlyGeminiError(message), details: message, requestId }, { status: 500 });
   }
 }
 
