@@ -1,0 +1,334 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(1200px 800px at 50% 20%, rgba(212, 175, 55, 0.08), transparent 55%),
+    radial-gradient(900px 600px at 20% 80%, rgba(139, 0, 0, 0.10), transparent 60%),
+    linear-gradient(180deg, #05040a 0%, #07060f 45%, #040208 100%);
+  color: #fff;
+}
+
+::selection {
+  background: rgba(212, 175, 55, 0.25);
+}
+
+/* Subtle “ink” grain */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.04) 1px, transparent 0);
+  background-size: 18px 18px;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+}
+
+@layer components {
+  .talisman-frame {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.5rem; /* rounded-3xl */
+    border: 1px solid rgba(212, 175, 55, 0.18);
+    background: rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+  }
+
+  /* Flowing sigil pattern */
+  .talisman-frame::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    pointer-events: none;
+    opacity: 0.30;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(212,175,55,0.20), transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(139,0,0,0.20), transparent 55%),
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 10px);
+    background-size: 520px 320px, 520px 320px, 140px 140px;
+    animation: sigilDrift 18s linear infinite;
+    filter: blur(0.2px);
+  }
+
+  .talisman-frame::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    pointer-events: none;
+    opacity: 0.85;
+    background:
+      radial-gradient(600px 260px at 25% 20%, rgba(212,175,55,0.16), transparent 60%),
+      radial-gradient(520px 240px at 80% 70%, rgba(139,0,0,0.14), transparent 60%);
+  }
+
+  /* Corner “talisman” marks */
+  .talisman-corner {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    opacity: 0.9;
+    box-shadow: 0 0 18px rgba(212, 175, 55, 0.12);
+  }
+
+  .talisman-corner::before,
+  .talisman-corner::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Gold dust overlay used on buttons/cards */
+  .gold-dust {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 220ms ease;
+    background-image:
+      radial-gradient(circle, rgba(212,175,55,0.55) 1px, transparent 2px),
+      radial-gradient(circle, rgba(255,255,255,0.20) 1px, transparent 2px),
+      radial-gradient(circle, rgba(139,0,0,0.35) 1px, transparent 2px);
+    background-size: 28px 28px, 38px 38px, 46px 46px;
+    background-position: 0 0, 10px 14px, 22px 4px;
+    mix-blend-mode: screen;
+    filter: blur(0.2px);
+  }
+
+  .gold-dust.is-on {
+    opacity: 1;
+    animation: dustLift 1.2s ease-out infinite;
+  }
+}
+
+/* Enable dust animation when used on hover without custom class toggling */
+.gold-dust {
+  animation: none;
+}
+
+.group:hover .gold-dust {
+  animation: dustLift 1.15s ease-out infinite;
+}
+
+@keyframes sigilDrift {
+  0% {
+    background-position: 0px 0px, 0px 0px, 0px 0px;
+  }
+  100% {
+    background-position: 240px -160px, -220px 120px, 120px 220px;
+  }
+}
+
+@keyframes dustLift {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.0;
+  }
+  10% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translate3d(0, -18px, 0);
+    opacity: 0.0;
+  }
+}
+
+/* Ritual button click effects */
+.ritual-btn .ritual-flash,
+.ritual-btn .ritual-ripple,
+.ritual-btn .ritual-seal {
+  opacity: 0;
+}
+
+.ritual-btn.is-casting .ritual-flash {
+  animation: ritualFlash 520ms ease-out both;
+}
+
+.ritual-btn.is-casting .ritual-ripple {
+  animation: ritualRipple 520ms ease-out both;
+}
+
+.ritual-btn.is-casting .ritual-seal {
+  animation: ritualSeal 720ms ease-out both;
+}
+
+@keyframes ritualFlash {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  18% {
+    opacity: 0.95;
+    transform: translateY(0px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px) scale(1.02);
+  }
+}
+
+@keyframes ritualRipple {
+  0% {
+    opacity: 0.0;
+    transform: scale(0.65);
+  }
+  20% {
+    opacity: 0.65;
+  }
+  100% {
+    opacity: 0.0;
+    transform: scale(1.45);
+  }
+}
+
+@keyframes ritualSeal {
+  0% {
+    opacity: 0;
+    transform: rotate(-22deg) scale(0.9);
+    filter: drop-shadow(0 0 0 rgba(212,175,55,0));
+  }
+  25% {
+    opacity: 0.95;
+    transform: rotate(0deg) scale(1);
+    filter: drop-shadow(0 0 18px rgba(212,175,55,0.18));
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(18deg) scale(1.08);
+    filter: drop-shadow(0 0 0 rgba(212,175,55,0));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ritual-btn.is-casting .ritual-flash,
+  .ritual-btn.is-casting .ritual-ripple,
+  .ritual-btn.is-casting .ritual-seal {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}
+
+/* Full-screen seal flash (on cast) */
+.screen-seal {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 50;
+}
+
+.screen-seal.is-on {
+  animation: screenSealFlash 520ms ease-out both;
+}
+
+@keyframes screenSealFlash {
+  0% {
+    opacity: 0;
+    transform: scale(0.985);
+    filter: saturate(1) blur(0px);
+  }
+  12% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.01);
+    filter: saturate(1.15) blur(0.3px);
+  }
+}
+
+/* Qi flow line */
+.qi-flow path {
+  stroke-dasharray: 10 8;
+  animation: qiDash 900ms linear infinite;
+}
+
+@keyframes qiDash {
+  to {
+    stroke-dashoffset: -36;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-seal.is-on {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+  .qi-flow path {
+    animation: none !important;
+  }
+}
+
+/* Loading stamp (seal imprint) */
+.loading-stamp {
+  opacity: 0;
+  transform: translate3d(0, 10px, 0) scale(0.92) rotate(-8deg);
+  filter: blur(0.2px);
+}
+
+.loading-card.is-loading .loading-stamp {
+  animation: stampImprint 900ms ease-out both;
+}
+
+.loading-scanline {
+  opacity: 0;
+  transform: translate3d(-14px, 10px, 0) rotate(-12deg);
+}
+
+.loading-card.is-loading .loading-scanline {
+  animation: scanSweep 1000ms ease-out both;
+}
+
+@keyframes stampImprint {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.90) rotate(-10deg);
+    filter: saturate(1) blur(0.8px);
+  }
+  20% {
+    opacity: 0.95;
+    transform: translate3d(0, 0px, 0) scale(1.03) rotate(-6deg);
+    filter: saturate(1.15) blur(0.2px);
+  }
+  55% {
+    opacity: 0.78;
+    transform: translate3d(0, -2px, 0) scale(1) rotate(-6deg);
+  }
+  100% {
+    opacity: 0.0;
+    transform: translate3d(0, -6px, 0) scale(1.06) rotate(-2deg);
+    filter: saturate(1) blur(0.4px);
+  }
+}
+
+@keyframes scanSweep {
+  0% {
+    opacity: 0;
+    transform: translate3d(-22px, 18px, 0) rotate(-12deg);
+  }
+  18% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(22px, -18px, 0) rotate(-12deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-card.is-loading .loading-stamp,
+  .loading-card.is-loading .loading-scanline {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}

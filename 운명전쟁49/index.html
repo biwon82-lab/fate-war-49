@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>운명전쟁49 - 로컬 HTML 테스트</title>
+    <style>
+      :root {
+        --gold: #d4af37;
+        --crimson: #8b0000;
+        --bg0: #05040a;
+        --bg1: #07060f;
+        --bg2: #040208;
+        --card: rgba(0, 0, 0, 0.22);
+        --border: rgba(212, 175, 55, 0.18);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.70);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Noto Sans,
+          "Apple SD Gothic Neo",
+          "Malgun Gothic",
+          sans-serif;
+        background:
+          radial-gradient(1200px 800px at 50% 20%, rgba(212, 175, 55, 0.08), transparent 55%),
+          radial-gradient(900px 600px at 20% 80%, rgba(139, 0, 0, 0.1), transparent 60%),
+          linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 45%, var(--bg2) 100%);
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.04) 1px, transparent 0);
+        background-size: 18px 18px;
+        opacity: 0.16;
+        mix-blend-mode: overlay;
+      }
+      ::selection {
+        background: rgba(212, 175, 55, 0.25);
+      }
+
+      .wrap {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 48px 16px;
+      }
+      @media (min-width: 640px) {
+        .wrap {
+          padding: 64px 24px;
+        }
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        background: rgba(0, 0, 0, 0.2);
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 12px;
+        color: rgba(212, 175, 55, 0.9);
+        box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.1);
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: var(--gold);
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.45;
+          transform: scale(0.95);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.05);
+        }
+      }
+
+      .title {
+        margin: 18px 0 10px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        font-size: 32px;
+        line-height: 1.15;
+        background: linear-gradient(
+          90deg,
+          rgba(212, 175, 55, 0.95),
+          rgba(255, 255, 255, 0.92),
+          rgba(139, 0, 0, 0.9)
+        );
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: shimmer 6s ease infinite;
+        text-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      }
+      @media (min-width: 640px) {
+        .title {
+          font-size: 44px;
+        }
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: 0% 50%;
+        }
+        100% {
+          background-position: 100% 50%;
+        }
+      }
+
+      .sub {
+        margin: 0 0 26px;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 14px;
+        line-height: 1.7;
+      }
+
+      .frame {
+        position: relative;
+        overflow: hidden;
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+        padding: 18px;
+      }
+      @media (min-width: 640px) {
+        .frame {
+          padding: 22px;
+        }
+      }
+      .frame::before {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        pointer-events: none;
+        opacity: 0.3;
+        background-image:
+          radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.2), transparent 50%),
+          radial-gradient(circle at 80% 70%, rgba(139, 0, 0, 0.2), transparent 55%),
+          repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 10px);
+        background-size: 520px 320px, 520px 320px, 140px 140px;
+        animation: sigil 18s linear infinite;
+      }
+      @keyframes sigil {
+        0% {
+          background-position: 0px 0px, 0px 0px, 0px 0px;
+        }
+        100% {
+          background-position: 240px -160px, -220px 120px, 120px 220px;
+        }
+      }
+
+      .frame-inner {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 14px;
+      }
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        font-size: 13px;
+        color: rgba(212, 175, 55, 0.9);
+        font-weight: 700;
+      }
+      .rule {
+        height: 1px;
+        flex: 1;
+        background: linear-gradient(to right, rgba(212, 175, 55, 0.3), rgba(255, 255, 255, 0.1), rgba(139, 0, 0, 0.3));
+      }
+
+      .grid {
+        display: grid;
+        gap: 12px;
+      }
+      @media (min-width: 760px) {
+        .grid.cols3 {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+      }
+      .lbl {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.85);
+        font-weight: 600;
+      }
+      input {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(212, 175, 55, 0.15);
+        background: rgba(0, 0, 0, 0.35);
+        color: rgba(255, 255, 255, 0.95);
+        outline: none;
+        transition: 160ms ease;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+      input:focus {
+        border-color: rgba(212, 175, 55, 0.35);
+        box-shadow:
+          0 0 0 2px rgba(212, 175, 55, 0.2),
+          0 0 0 1px rgba(212, 175, 55, 0.2),
+          0 0 22px rgba(212, 175, 55, 0.22),
+          inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+
+      .btn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(212, 175, 55, 0.25);
+        background: linear-gradient(90deg, rgba(212, 175, 55, 0.16), rgba(139, 0, 0, 0.15), rgba(212, 175, 55, 0.16));
+        background-size: 200% 200%;
+        color: rgba(255, 255, 255, 0.95);
+        font-weight: 800;
+        cursor: pointer;
+        user-select: none;
+        transition: 180ms ease;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+        animation: shimmer 6s ease infinite;
+        overflow: hidden;
+      }
+      .btn:hover {
+        border-color: rgba(212, 175, 55, 0.45);
+        box-shadow:
+          0 0 0 1px rgba(212, 175, 55, 0.2),
+          0 0 22px rgba(212, 175, 55, 0.22),
+          0 18px 60px rgba(0, 0, 0, 0.45);
+      }
+      .btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .dust {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0;
+        background-image:
+          radial-gradient(circle, rgba(212, 175, 55, 0.55) 1px, transparent 2px),
+          radial-gradient(circle, rgba(255, 255, 255, 0.2) 1px, transparent 2px),
+          radial-gradient(circle, rgba(139, 0, 0, 0.35) 1px, transparent 2px);
+        background-size: 28px 28px, 38px 38px, 46px 46px;
+        background-position: 0 0, 10px 14px, 22px 4px;
+        mix-blend-mode: screen;
+      }
+      .btn:hover .dust {
+        opacity: 1;
+        animation: dustLift 1.15s ease-out infinite;
+      }
+      @keyframes dustLift {
+        0% {
+          transform: translate3d(0, 0, 0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 0.65;
+        }
+        100% {
+          transform: translate3d(0, -18px, 0);
+          opacity: 0;
+        }
+      }
+
+      .row {
+        display: grid;
+        gap: 12px;
+        margin-top: 14px;
+      }
+      @media (min-width: 760px) {
+        .row {
+          grid-template-columns: 1fr auto;
+          align-items: center;
+        }
+        .btn {
+          width: auto;
+          min-width: 220px;
+        }
+      }
+
+      .hint {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.55);
+        line-height: 1.5;
+      }
+      .code {
+        color: rgba(212, 175, 55, 0.9);
+        font-weight: 700;
+      }
+
+      .panel {
+        margin-top: 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.25);
+        padding: 14px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 12px;
+        line-height: 1.7;
+        color: rgba(255, 255, 255, 0.82);
+      }
+
+      .loading {
+        display: none;
+        margin-top: 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(212, 175, 55, 0.15);
+        background: rgba(0, 0, 0, 0.2);
+        padding: 16px;
+        text-align: center;
+      }
+      .loading.on {
+        display: block;
+      }
+
+      .spinner {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 8px;
+        position: relative;
+      }
+      .spin {
+        position: absolute;
+        inset: 0;
+        animation: spin 1.2s linear infinite;
+        filter: drop-shadow(0 0 16px rgba(212, 175, 55, 0.25));
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .type {
+        margin-top: 10px;
+        font-size: 13px;
+        line-height: 1.7;
+        color: rgba(255, 255, 255, 0.9);
+      }
+      @media (min-width: 640px) {
+        .type {
+          font-size: 14px;
+          line-height: 1.9;
+        }
+      }
+      .cursor {
+        display: inline-block;
+        width: 8px;
+        height: 14px;
+        margin-left: 2px;
+        background: rgba(212, 175, 55, 0.7);
+        vertical-align: -2px;
+        animation: pulse 1.2s ease-in-out infinite;
+      }
+
+      .error {
+        margin-top: 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(139, 0, 0, 0.3);
+        background: linear-gradient(135deg, rgba(139, 0, 0, 0.25), rgba(0, 0, 0, 0.25));
+        padding: 14px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.88);
+      }
+      .error b {
+        color: rgba(255, 255, 255, 0.95);
+      }
+      .footer-note {
+        margin-top: 18px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.55);
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <div style="text-align: center">
+        <span class="badge"><span class="dot"></span> 로컬 HTML 테스트 (index.html)</span>
+        <h1 class="title">운명전쟁49 - 당신의 운명을 확인하세요</h1>
+        <p class="sub">
+          이 파일은 <b>Next 서버가 안 떠도</b> UI/입력 흐름을 확인할 수 있는 단독 테스트 페이지입니다. <br />
+          실제 API 호출을 하려면 Next dev 서버가 켜져 있어야 합니다.
+        </p>
+      </div>
+
+      <div class="frame">
+        <div class="frame-inner">
+          <div class="section-title">테스트 입력 <span class="rule"></span></div>
+
+          <form id="form">
+            <div class="grid cols3">
+              <label>
+                <span class="lbl">이름</span>
+                <input id="name" autocomplete="name" placeholder="홍길동" value="홍길동" />
+              </label>
+
+              <label>
+                <span class="lbl">생년월일</span>
+                <input id="birthDate" type="date" value="1997-03-21" />
+              </label>
+
+              <label>
+                <span class="lbl">태어난 시간</span>
+                <input id="birthTime" type="time" value="09:35" />
+              </label>
+            </div>
+
+            <div class="row">
+              <button id="btn" class="btn" type="submit">
+                <span>API 테스트 실행</span>
+                <span class="dust" aria-hidden="true"></span>
+              </button>
+              <div class="hint">
+                기본 호출 주소: <span class="code">http://localhost:3000/api/saju</span><br />
+                (file://로 열면 일부 브라우저에서 fetch가 차단될 수 있어요. 그땐 아래 안내대로 간단 서버로 열면 됩니다.)
+              </div>
+            </div>
+          </form>
+
+          <div id="loading" class="loading" aria-live="polite">
+            <div class="spinner">
+              <svg class="spin" viewBox="0 0 100 100" role="img" aria-label="로딩">
+                <defs>
+                  <linearGradient id="gGold" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#D4AF37" stop-opacity="0.95" />
+                    <stop offset="1" stop-color="#8B0000" stop-opacity="0.9" />
+                  </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6" />
+                <path
+                  d="M50,10 a40,40 0 1,0 0,80 a20,20 0 1,1 0,-40 a20,20 0 1,0 0,-40"
+                  fill="url(#gGold)"
+                  opacity="0.95"
+                />
+                <circle cx="50" cy="30" r="7" fill="rgba(10,10,16,0.85)" />
+                <circle cx="50" cy="70" r="7" fill="rgba(255,255,255,0.75)" />
+              </svg>
+            </div>
+            <div class="hint">명리학자가 당신의 사주를 분석 중입니다...</div>
+          </div>
+
+          <div id="error" class="error" style="display: none"></div>
+
+          <div class="section-title" style="margin-top: 14px">풀이 결과 <span class="rule"></span></div>
+          <div id="result" class="panel type">아직 실행하지 않았습니다.</div>
+
+          <div class="section-title" style="margin-top: 14px">Raw 응답(디버그) <span class="rule"></span></div>
+          <div id="raw" class="panel">-</div>
+
+          <div class="footer-note">
+            API까지 포함해서 제대로 테스트하려면:
+            <br />
+            - 터미널에서 Next 서버 실행: <span class="code">npm run dev</span>
+            <br />
+            - 또는 이 폴더에서 정적 서버로 열기:
+            <br />
+            <span class="code">python3 -m http.server 5500</span> → <span class="code">http://localhost:5500</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+
+      const form = $("form");
+      const btn = $("btn");
+      const loading = $("loading");
+      const result = $("result");
+      const error = $("error");
+      const raw = $("raw");
+
+      let typingTimer = null;
+
+      function setLoading(on) {
+        loading.classList.toggle("on", on);
+        btn.disabled = on;
+      }
+
+      function showError(msg) {
+        error.style.display = "block";
+        error.innerHTML =
+          "<b>에러</b><br/>" +
+          msg +
+          "<br/><br/>" +
+          "체크: (1) Next dev 서버가 떠있나요? (2) 주소/포트가 맞나요? (3) https로 자동 변경되지 않았나요?";
+      }
+
+      function clearError() {
+        error.style.display = "none";
+        error.textContent = "";
+      }
+
+      function typewriter(text) {
+        if (typingTimer) clearInterval(typingTimer);
+        result.innerHTML = "";
+        let i = 0;
+        const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduced) {
+          result.textContent = text;
+          return;
+        }
+        typingTimer = setInterval(() => {
+          i += 1;
+          result.textContent = text.slice(0, i);
+          if (i >= text.length) clearInterval(typingTimer);
+        }, 14);
+      }
+
+      $("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearError();
+        setLoading(true);
+        raw.textContent = "-";
+        result.textContent = "";
+
+        const payload = {
+          name: $("name").value.trim(),
+          birthDate: $("birthDate").value.trim(),
+          birthTime: $("birthTime").value.trim()
+        };
+
+        try {
+          const url = "http://localhost:3000/api/saju";
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json().catch(() => null);
+
+          raw.textContent = JSON.stringify({ url, status: res.status, ok: res.ok, payload, data }, null, 2);
+
+          if (!res.ok) {
+            showError((data && (data.error || data.details)) || "요청이 실패했습니다.");
+            return;
+          }
+
+          typewriter(data.result || "");
+        } catch (err) {
+          raw.textContent = String(err);
+          showError(String(err));
+        } finally {
+          setLoading(false);
+        }
+      });
+    </script>
+  </body>
+</html>
+
