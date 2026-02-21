@@ -86,8 +86,10 @@ function setCached(key: string, text: string) {
 
 function extractStatusCode(err: unknown): number | undefined {
   if (!err || typeof err !== "object") return undefined;
-  const anyErr = err as any;
-  const candidates = [anyErr.status, anyErr.statusCode, anyErr.code, anyErr.response?.status];
+  const rec = err as Record<string, unknown>;
+  const response = rec["response"];
+  const responseRec = response && typeof response === "object" ? (response as Record<string, unknown>) : null;
+  const candidates = [rec["status"], rec["statusCode"], rec["code"], responseRec?.["status"]];
   for (const c of candidates) {
     if (typeof c === "number") return c;
     if (typeof c === "string" && /^\d+$/.test(c)) return Number(c);
