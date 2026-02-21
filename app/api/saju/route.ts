@@ -59,6 +59,9 @@ function isValidTimeHHMM(v: string) {
 
 function toUserFriendlyGeminiError(message: string) {
   const m = message.toLowerCase();
+  if (m.includes("429") || m.includes("resource exhausted") || m.includes("rate") || m.includes("quota")) {
+    return "Gemini API 호출 한도(Quota/Rate limit)에 걸렸습니다. 잠시 후 다시 시도하거나 플랜/쿼터를 확인해주세요.";
+  }
   if (m.includes("api key") && (m.includes("invalid") || m.includes("not valid"))) {
     return "Gemini API 키가 유효하지 않습니다. Netlify/로컬 환경변수 GEMINI_API_KEY를 다시 확인해주세요.";
   }
@@ -105,10 +108,16 @@ export async function POST(req: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    let model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      systemInstruction: SYSTEM_PROMPT
-    });
+    const candidateModels = [
+      // 가장 흔히 동작하는 라인업부터
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-latest",
+      "gemini-1.5-pro",
+      "gemini-1.5-pro-latest",
+      // 환경에 따라 2.0 계열이 열려 있는 경우가 있어 fallback으로 시도
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite"
+    ];
 
     const userPrompt = [
       `사용자 이름: ${name}`,
@@ -119,17 +128,53 @@ export async function POST(req: Request) {
     ].join("\n");
 
     let text = "";
-    try {
-      const result = await model.generateContent(userPrompt);
-      text = result.response.text();
-    } catch (e) {
-      // SDK/환경 차이로 systemInstruction이 동작하지 않는 경우를 대비해 fallback
-      const fallbackMessage = e instanceof Error ? e.message : String(e);
-      console.error("[/api/saju] primary generateContent failed", { requestId, fallbackMessage });
-      model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const fallbackPrompt = `${SYSTEM_PROMPT}\n\n${userPrompt}`;
-      const result = await model.generateContent(fallbackPrompt);
-      text = result.response.text();
+    const errors: Array<{ model: string; message: string; phase: "systemInstruction" | "inlinePrompt" }> = [];
+
+    async function tryGenerate(modelName: string, phase: "systemInstruction" | "inlinePrompt") {
+      const model =
+        phase === "systemInstruction"
+          ? genAI.getGenerativeModel({ model: modelName, systemInstruction: SYSTEM_PROMPT })
+          : genAI.getGenerativeModel({ model: modelName });
+
+      const prompt = phase === "systemInstruction" ? userPrompt : `${SYSTEM_PROMPT}\n\n${userPrompt}`;
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    }
+
+    // 1) systemInstruction 지원 모델이면 우선 이 방식으로 시도
+    for (const modelName of candidateModels) {
+      try {
+        text = await tryGenerate(modelName, "systemInstruction");
+        break;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        errors.push({ model: modelName, message: msg, phase: "systemInstruction" });
+        console.error("[/api/saju] generateContent failed (systemInstruction)", { requestId, modelName, msg });
+      }
+    }
+
+    // 2) 실패 시: systemInstruction 미지원/환경 이슈 대비 inline prompt로 재시도
+    if (!text) {
+      for (const modelName of candidateModels) {
+        try {
+          text = await tryGenerate(modelName, "inlinePrompt");
+          break;
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          errors.push({ model: modelName, message: msg, phase: "inlinePrompt" });
+          console.error("[/api/saju] generateContent failed (inlinePrompt)", { requestId, modelName, msg });
+        }
+      }
+    }
+
+    if (!text) {
+      const last = errors.at(-1)?.message ?? "Unknown error";
+      throw new Error(
+        `All Gemini model attempts failed. last=${last} attempts=${errors
+          .slice(0, 6)
+          .map((e) => `${e.model}:${e.phase}`)
+          .join(",")}`
+      );
     }
 
     return NextResponse.json({ result: text, requestId });
